@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import sys
 import time
+import json
 
 class Person:
     def __init__(self, name, phone, gender, age):
@@ -64,10 +65,15 @@ def crawler(seed):
             print(e)
     return persons
 
-# crawler('https://fit.cvut.cz')
 persons = crawler('http://localhost:8000')
+persons_dict = dict()
 
 for person in persons:
     print(person)
+    persons_dict[person.name] = person.__dict__
+
 
 print("Persons in list is {:d}".format(len(persons)))
+
+with open('persons.json', 'w') as outfile:
+    json.dump(persons_dict, outfile)
