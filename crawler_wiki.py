@@ -5,14 +5,20 @@ import time
 import json
 import random
 
-class Person:
-    def __init__(self, name, rating):
-        self.name = name
-        self.rating = rating
-
+class Page:
+    def __init__(self, url, title, heading, languages):
+        self.url = url
+        self.title = title
+        self.heading = heading
+        self.languages = languages
 
     def __str__(self):
-        return "{:s} has a rating of ".format(self.name, self.rating)
+        nbr_lang = len(self.languages) + 1
+        return "The page has the heading: {:s} \t url: {:s} \t and exists in {:d} languages".format(self.heading, self.url, nbr_lang)
+
+    def print_lang(self):
+        lang_str = " ".join([str(x) for x in self.languages])
+        print(lang_str)
 
 
 def found_hitler(crawled):
@@ -39,40 +45,45 @@ def get_valid_link(links, crawled, root_url):
 
     return root_url + next_link
 
+
 def get_page_info(soup):
-    title = soup.find("h1", { "id" : "firstHeading" }).contents[0]
-    print(title)
+    heading = soup.find("h1", { "id" : "firstHeading" }).contents[0]
 
-    # refs = soup.find("div", { "class" : "reflist" }).findAll("a", href=True)
-    # refs = soup.find("h2", { "id" : "References" }).find("div", { "class" : "reflist" }).findAll("a", href=True)
-    refs = soup.find({ "id" : "References" })
-    # references = [ref.contents[0] for ref in refs]
-    # print(references)
-    print(refs)
-    sys.exit(1)
+    title = soup.find({"title"}).contents[0]
 
+    lang_links = soup.find("div", {"id" : "p-lang"}).find("div", {"class" : "body"}).findAll("a")
+    if lang_links:
+        languages = [lang_link.contents[0] for lang_link in lang_links]
+        languages.pop() # Remove Add/Edit link
+
+
+    return heading, title, languages
 
 
 def crawler(seed, root_url):
     frontier=[seed]
     crawled=[]
-    movies = []
+    pages = []
 
     while frontier:
-        page=frontier.pop()
+        page_url=frontier.pop()
         try:
             times_per_second = 10
             time.sleep(1/times_per_second)
-            print('Crawled:'+page)
+            # print('Crawled:'+page_url)
             headers = {
                 'User-Agent': 'DDW School Prague CVUT'
             }
 
-            source = requests.get(page, headers=headers).text
-            crawled.append(page)
+            source = requests.get(page_url, headers=headers).text
+            crawled.append(page_url)
             soup = BeautifulSoup(source, "html5lib")
 
-            get_page_info(soup)
+            heading, title, languages = get_page_info(soup)
+
+            p = Page(page_url, title, heading, languages)
+            print(p)
+            # pages.append(Page(page_url, title, heading, languages))
 
             hitler = soup.find(attrs={"href" : "/wiki/Adolf_Hitler"})
             if hitler:
