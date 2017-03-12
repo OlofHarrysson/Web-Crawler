@@ -11,9 +11,10 @@ class Page:
         self.title = title
         self.heading = heading
         self.languages = languages
+        self.languages.append('English')
 
     def __str__(self):
-        nbr_lang = len(self.languages) + 1
+        nbr_lang = len(self.languages)
         return "The page has the heading: {:s} \t url: {:s} \t and exists in {:d} languages".format(self.heading, self.url, nbr_lang)
 
     def print_lang(self):
@@ -21,8 +22,17 @@ class Page:
         print(lang_str)
 
 
-def found_hitler(crawled):
+def finish_prog(crawled, pages):
     print("Found a wiki page that references to Adolf Hitler after crawling {:d} pages".format(len(crawled)))
+
+    pages_dict = dict()
+    for page in pages:
+        pages_dict[page.heading] = page.__dict__
+
+
+    with open('pages.json', 'w') as outfile:
+        json.dump(pages_dict, outfile)
+
     sys.exit(1)
 
 def valid_link(link, crawled, root_url):
@@ -81,14 +91,13 @@ def crawler(seed, root_url):
 
             heading, title, languages = get_page_info(soup)
 
-            p = Page(page_url, title, heading, languages)
-            print(p)
-            # pages.append(Page(page_url, title, heading, languages))
+            page = Page(page_url, title, heading, languages)
+            print(page)
+            pages.append(page)
 
             hitler = soup.find(attrs={"href" : "/wiki/Adolf_Hitler"})
             if hitler:
-                found_hitler(crawled)
-
+                finish_prog(crawled, pages)
 
 
             links = soup.find("div", { "id" : "mw-content-text" }).find('p').findAll("a", href=True)
