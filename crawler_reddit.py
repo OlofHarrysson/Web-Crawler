@@ -5,20 +5,18 @@ import time
 import json
 
 class Person:
-    def __init__(self, name, phone, gender, age):
+    def __init__(self, name, rating):
         self.name = name
-        self.phone = phone
-        self.gender = gender
-        self.age = age
+        self.rating = rating
+
 
     def __str__(self):
-        return "{:s} has the phone number {:s}. Is a {:s} and {:s} years old".format(
-                        self.name, self.phone, self.gender, self.age)
+        return "{:s} has a rating of ".format(self.name, self.rating)
 
 def crawler(seed):
     frontier=[seed]
     crawled=[]
-    persons = []
+    movies = []
 
     while frontier:
         page=frontier.pop()
@@ -26,29 +24,24 @@ def crawler(seed):
             time.sleep(0.2)
             print('Crawled:'+page)
             headers = {
-                'User-Agent': 'DDW'
+                'User-Agent': 'DDW School Prague CVUT'
             }
 
             source = requests.get(page, headers=headers).text
-            soup=BeautifulSoup(source, "html5lib")
-            person_div = soup.find("div", { "class" : "person" })
+            soup = BeautifulSoup(source, "html5lib")
+
+
+            person_div = soup.find("div", { "id" : "rec_item" }).findAll("a", href=True)
+            print(person_div)
+            sys.exit(1)
 
             if person_div:
-                name_span = person_div.find("span", { "class" : "name" })
-                name = name_span.contents[0]
-
-                phone_span = person_div.find("span", { "class" : "phone" })
-                phone = phone_span.contents[0]
-
-                gender_span = person_div.find("span", { "class" : "gender" })
-                gender = gender_span.contents[0]
-
-                age_span = person_div.find("span", { "class" : "age" })
-                age = age_span.contents[0]
+                title = soup.find("div", { "class" : "originalTitle" }).contents[0]
+                rating = soup.find(itemprop="ratingValue").getText()
 
 
-                person = Person(name, phone, gender, age)
-                persons.append(person)
+                movie = Movie(name, rating)
+                movies.append(movie)
 
 
             links=soup.findAll('a',href=True)
@@ -63,17 +56,9 @@ def crawler(seed):
 
         except Exception as e:
             print(e)
-    return persons
+    return movies
 
-persons = crawler('http://localhost:8000')
-persons_dict = dict()
+movies = crawler('http://www.imdb.com/title/tt0482571/?ref_=nv_sr_1') # Movie the Prestige
 
-for person in persons:
-    print(person)
-    persons_dict[person.name] = person.__dict__
-
-
-print("Persons in list is {:d}".format(len(persons)))
-
-with open('persons.json', 'w') as outfile:
-    json.dump(persons_dict, outfile)
+for movie in movies:
+    print(movie)
